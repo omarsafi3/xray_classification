@@ -30,7 +30,7 @@ public class GlobalMetricsController {
         return globalMetricsService.saveGlobalMetrics(globalMetrics);
     }
 
-    @GetMapping public GlobalMetrics getLatestGlobalMetrics() {
+    @GetMapping("/latest") public GlobalMetrics getLatestGlobalMetrics() {
         List<GlobalMetrics> globalMetricsList = globalMetricsService.getAllGlobalMetrics();
         if (globalMetricsList.isEmpty()) {
             return new GlobalMetrics(0, 0, 0, 0, 0, 0, LocalDateTime.now());
