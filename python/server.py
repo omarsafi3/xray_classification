@@ -349,7 +349,7 @@ if __name__ == "__main__":
     plt.ion()  # Turn on interactive mode
 
     fl.server.start_server(
-        server_address="192.168.137.1:8081",
+        server_address="localhost:8081",
         config=fl.server.ServerConfig(num_rounds=100),
         strategy=strategy
     )

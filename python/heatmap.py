@@ -1,0 +1,133 @@
+import os
+import re
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import GlobalAveragePooling2D, Reshape, Dense, multiply
+from tf_keras_vis.gradcam import Gradcam
+from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
+from tf_keras_vis.utils.scores import CategoricalScore
+import numpy as np
+from tensorflow.keras.preprocessing import image
+import matplotlib.pyplot as plt
+from tf_keras_vis.utils.scores import CategoricalScore, Score
+import io
+from PIL import Image
+import requests
+# Your custom blocks / metrics here (SEBlock, sensitivity, specificity) ...
+class DummyScore(Score):
+    def __call__(self, outputs):
+        return tf.zeros((outputs.shape[0],))
+def SEBlock(se_ratio=16, activation="relu", data_format='channels_last', kernel_initializer="he_normal"):
+    def block(input_tensor):
+        channel_axis = -1 if data_format == 'channels_last' else 1
+        input_channels = K.int_shape(input_tensor)[channel_axis]
+        reduced_channels = max(1, input_channels // se_ratio)
+        x = GlobalAveragePooling2D(data_format=data_format)(input_tensor)
+        x = Reshape((1, 1, input_channels))(x) if data_format == 'channels_last' else Reshape((input_channels, 1, 1))(x)
+        x = Dense(reduced_channels, activation=activation, kernel_initializer=kernel_initializer)(x)
+        x = Dense(input_channels, activation='sigmoid', kernel_initializer=kernel_initializer)(x)
+        x = multiply([input_tensor, x])
+        return x
+    return block
+
+def safe_div(numerator, denominator):
+    return tf.math.divide_no_nan(numerator, denominator)
+
+def sensitivity(y_true, y_pred):
+    y_pred = tf.round(y_pred)
+    true_positives = tf.reduce_sum(y_true * y_pred)
+    possible_positives = tf.reduce_sum(y_true)
+    return safe_div(true_positives, possible_positives)
+
+def specificity(y_true, y_pred):
+    y_pred = tf.round(y_pred)
+    true_negatives = tf.reduce_sum((1 - y_true) * (1 - y_pred))
+    possible_negatives = tf.reduce_sum(1 - y_true)
+    return safe_div(true_negatives, possible_negatives)
+
+# --------- Load Best Model Function ---------
+def load_best_model_from_dir(save_dir, custom_objects):
+    if not os.path.exists(save_dir):
+        raise FileNotFoundError(f"Save directory '{save_dir}' not found")
+
+    model_files = [f for f in os.listdir(save_dir) if f.endswith(".keras")]
+    if not model_files:
+        raise FileNotFoundError("No saved `.keras` models found in the directory.")
+
+    def extract_val_loss(filename):
+        match = re.search(r"loss_([\d\.]+)", filename)
+        if match:
+            val_loss_str = match.group(1).rstrip('.')  # <-- strip trailing dot
+            return float(val_loss_str)
+        return float('inf')
+
+    best_model_file = min(model_files, key=extract_val_loss)
+    best_model_path = os.path.join(save_dir, best_model_file)
+    print(f"Loading best model: {best_model_file} with val_loss = {extract_val_loss(best_model_file)}")
+    return tf.keras.models.load_model(best_model_path, custom_objects=custom_objects)
+
+# --------- Main Execution ---------
+
+save_dir = r"C:\Users\safio\Desktop\xray_classification\python\saved_models"  # update to your path
+
+# Load best model automatically
+model = load_best_model_from_dir(save_dir, custom_objects={
+    'SEBlock': SEBlock,
+    'sensitivity': sensitivity,
+    'specificity': specificity
+})
+
+# Image preprocessing
+img_path = r"C:\Users\safio\Desktop\central_curated_sourour\test\Pneumonia-Bacterial\Pneumonia-Bacterial (316).jpg"
+img = image.load_img(img_path, target_size=(224, 224))
+img_array = np.expand_dims(image.img_to_array(img) / 255.0, axis=0)
+
+# Prediction and GradCAM setup
+preds = model.predict(img_array)
+top_class = np.argmax(preds[0])
+score = CategoricalScore([top_class])
+
+
+last_conv_layer_name = None
+for layer in reversed(model.layers):
+    if isinstance(layer, tf.keras.layers.Conv2D):
+        last_conv_layer_name = layer.name
+        break
+
+if last_conv_layer_name is None:
+    raise ValueError("No Conv2D layer found in the model.")
+
+print("Last Conv2D layer in the model:", last_conv_layer_name)
+
+last_conv_layer = model.get_layer(last_conv_layer_name)
+
+grad_model = tf.keras.Model(inputs=model.input, outputs=[last_conv_layer.output, model.output])
+
+gradcam = Gradcam(grad_model, model_modifier=ReplaceToLinear(), clone=False)
+dummy_score = DummyScore()
+heatmap = gradcam([dummy_score, score], img_array)[0]
+
+
+# Create a combined RGB image (original + heatmap overlay)
+fig, ax = plt.subplots()
+ax.imshow(img)
+ax.imshow(heatmap, cmap='jet', alpha=0.5)
+ax.axis('off')
+
+# Save the figure to a bytes buffer
+buf = io.BytesIO()
+plt.savefig(buf, format='PNG', bbox_inches='tight', pad_inches=0)
+buf.seek(0)
+image_bytes = buf.getvalue()
+buf.close()
+
+# Optional: base64 encode if you want to send it as JSON
+import base64
+image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+
+response = requests.post(
+    "http://localhost:8080/api/v1/heatmap/upload",
+    files={"file": ("heatmap.png", image_bytes, "image/png")}
+)
+
+print("Response:", response.status_code, response.text)

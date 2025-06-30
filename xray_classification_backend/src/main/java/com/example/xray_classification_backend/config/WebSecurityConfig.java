@@ -12,7 +12,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf().disable() // Disable CSRF for testing
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/model/metrics/**").permitAll()
+                        .requestMatchers("/api/v1/**").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
