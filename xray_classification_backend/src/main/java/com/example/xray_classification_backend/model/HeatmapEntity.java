@@ -18,5 +18,7 @@ public class HeatmapEntity {
     @Column(columnDefinition = "LONGBLOB")
     private byte[] image;
 
+    private String prediction;
+
     // getters and setters
 }

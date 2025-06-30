@@ -108,6 +108,12 @@ dummy_score = DummyScore()
 heatmap = gradcam([dummy_score, score], img_array)[0]
 
 
+# Class names in order used by the CNN
+class_names = ["Covid", "Normal", "Pneumonia-Bacterial", "Pneumonia-Viral"]
+top_class_name = class_names[top_class]
+
+print("Top predicted class:", top_class_name)
+
 # Create a combined RGB image (original + heatmap overlay)
 fig, ax = plt.subplots()
 ax.imshow(img)
@@ -121,13 +127,11 @@ buf.seek(0)
 image_bytes = buf.getvalue()
 buf.close()
 
-# Optional: base64 encode if you want to send it as JSON
-import base64
-image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-
+# Send heatmap + prediction to backend
 response = requests.post(
     "http://localhost:8080/api/v1/heatmap/upload",
-    files={"file": ("heatmap.png", image_bytes, "image/png")}
+    files={"file": ("heatmap.png", image_bytes, "image/png")},
+    data={"prediction": top_class_name}
 )
 
 print("Response:", response.status_code, response.text)

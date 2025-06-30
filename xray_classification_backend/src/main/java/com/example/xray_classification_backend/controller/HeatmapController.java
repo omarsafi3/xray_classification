@@ -20,12 +20,16 @@ public class HeatmapController {
     private HeatmapRepository heatmapRepository;
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadHeatmap(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> uploadHeatmap(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("prediction") String prediction) {
         try {
             HeatmapEntity heatmap = new HeatmapEntity();
             heatmap.setImage(file.getBytes());
+            heatmap.setPrediction(prediction);
             heatmapRepository.save(heatmap);
-            return ResponseEntity.ok("Saved successfully.");
+
+            return ResponseEntity.ok("Saved successfully with prediction: " + prediction);
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Failed to save image.");
         }
