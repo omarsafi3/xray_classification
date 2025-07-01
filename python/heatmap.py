@@ -13,6 +13,9 @@ from tf_keras_vis.utils.scores import CategoricalScore, Score
 import io
 from PIL import Image
 import requests
+import argparse
+import json
+import base64
 # Your custom blocks / metrics here (SEBlock, sensitivity, specificity) ...
 class DummyScore(Score):
     def __call__(self, outputs):
@@ -78,7 +81,10 @@ model = load_best_model_from_dir(save_dir, custom_objects={
 })
 
 # Image preprocessing
-img_path = r"C:\Users\safio\Desktop\central_curated_sourour\test\Pneumonia-Bacterial\Pneumonia-Bacterial (316).jpg"
+parser = argparse.ArgumentParser()
+parser.add_argument("--img_path", required=True)
+args = parser.parse_args()
+img_path = args.img_path
 img = image.load_img(img_path, target_size=(224, 224))
 img_array = np.expand_dims(image.img_to_array(img) / 255.0, axis=0)
 
@@ -128,10 +134,11 @@ image_bytes = buf.getvalue()
 buf.close()
 
 # Send heatmap + prediction to backend
-response = requests.post(
-    "http://localhost:8080/api/v1/heatmap/upload",
-    files={"file": ("heatmap.png", image_bytes, "image/png")},
-    data={"prediction": top_class_name}
-)
+image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
-print("Response:", response.status_code, response.text)
+output = {
+    "prediction": top_class_name,
+    "heatmap_base64": image_base64
+}
+
+print(json.dumps(output))
