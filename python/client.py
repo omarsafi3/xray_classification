@@ -120,7 +120,7 @@ class FlowerClient(fl.client.NumPyClient):
     def train_step(self, parameters):
         self.model.set_weights(parameters)
         self.model.compile(optimizer=self.optimizer, loss=self.loss_fn, metrics=['accuracy', sensitivity, specificity])
-        history = self.model.fit(self.train_dataset, epochs=3, verbose=1, callbacks=[self.es, self.lrr], validation_data=self.val_dataset)
+        history = self.model.fit(self.train_dataset, epochs=1, verbose=1, callbacks=[self.es, self.lrr], validation_data=self.val_dataset)
         return self.model.get_weights(), self.train_samples, history
 
     def evaluate(self, parameters, config):
@@ -161,7 +161,7 @@ class FlowerClient(fl.client.NumPyClient):
 
 if __name__ == "__main__":
     client_id = int(os.getenv("CLIENT_ID", 3))
-    data_dir = r"C:\Users\safio\Desktop\clients"
+    data_dir = r"C:\Users\LOQ\Desktop\clients"
     fl.client.start_numpy_client(
         server_address="localhost:8081",
         client=FlowerClient(client_id, data_dir)
