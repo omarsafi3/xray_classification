@@ -132,10 +132,11 @@ plt.savefig(buf, format='PNG', bbox_inches='tight', pad_inches=0)
 buf.seek(0)
 image_bytes = buf.getvalue()
 buf.close()
-
+import sys
 # Send heatmap + prediction to backend
 image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-
+print(f"Last Conv2D layer in the model: {last_conv_layer_name}", file=sys.stderr)
+print(f"Top predicted class: {top_class_name}", file=sys.stderr)
 output = {
     "prediction": top_class_name,
     "heatmap_base64": image_base64

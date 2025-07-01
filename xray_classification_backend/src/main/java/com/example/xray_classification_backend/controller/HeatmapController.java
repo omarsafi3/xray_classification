@@ -47,38 +47,58 @@ public class HeatmapController {
             File tempImage = new File(tempDir, file.getOriginalFilename());
             file.transferTo(tempImage);
 
-            // Run the Python script and pass the image path
+            // Full absolute path to your Python script
+            String pythonScriptPath = "C:\\Users\\safio\\Desktop\\xray_classification\\python\\heatmap.py";
+
             ProcessBuilder builder = new ProcessBuilder(
-                    "C:\\Users\\safio\\anaconda3\\envs\\tf211\\python.exe",
-                    "heatmap.py",
+                    "C:\\Users\\safio\\.conda\\envs\\tf211\\python.exe",
+                    pythonScriptPath,
                     "--img_path", tempImage.getAbsolutePath()
             );
 
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            // Read the script output
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            StringBuilder output = new StringBuilder();
             String line;
+            StringBuilder logs = new StringBuilder();  // to collect all logs
+            String jsonLine = null;                    // to store the JSON line output
+
             while ((line = reader.readLine()) != null) {
-                output.append(line);
+                System.out.println("[PYTHON] " + line);  // log for debugging
+
+                // Check if line looks like JSON (starts with '{')
+                if (line.trim().startsWith("{")) {
+                    jsonLine = line.trim();
+                } else {
+                    logs.append(line).append("\n");
+                }
             }
 
             int exitCode = process.waitFor();
+            System.out.println("Python script exited with code: " + exitCode);
+
             if (exitCode != 0) {
-                return ResponseEntity.status(500).body(Map.of("error", "Python script failed"));
+                return ResponseEntity.status(500)
+                        .body(Map.of("error", "Python script failed", "details", logs.toString()));
             }
 
-            // Parse JSON output from Python (you'll format the output there)
+            if (jsonLine == null) {
+                // No JSON output found in script
+                return ResponseEntity.status(500)
+                        .body(Map.of("error", "No JSON output from Python script", "logs", logs.toString()));
+            }
+
+            // Parse JSON output from Python script
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> result = mapper.readValue(output.toString(), Map.class);
+            Map<String, Object> result = mapper.readValue(jsonLine, Map.class);
+
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
         }
-    }
 
+    }
 }
