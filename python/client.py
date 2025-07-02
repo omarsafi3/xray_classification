@@ -20,6 +20,7 @@ if gpus:
     except RuntimeError as e:
         logging.warning(f"Failed to set memory growth: {e}")
 
+
 def safe_div(numerator, denominator):
     return tf.math.divide_no_nan(numerator, denominator)
 
@@ -60,9 +61,11 @@ def build_improved_se_resnet(num_classes=4):
     outputs = Dense(num_classes, activation='softmax')(x)
     return Model(inputs=inputs, outputs=outputs)
 
+
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, dataset_path):
-        self.dataset_path = dataset_path
+    def __init__(self, client_id, data_dir):
+        self.client_id = client_id
+        self.data_dir = data_dir
         self.model = build_improved_se_resnet(num_classes=4)
         self.load_data()
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
@@ -72,8 +75,10 @@ class FlowerClient(fl.client.NumPyClient):
 
     def load_data(self):
         try:
+            dataset_path = os.path.join(self.data_dir, f"client_{self.client_id}")
+            
             self.train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
-                self.dataset_path,
+                dataset_path,
                 validation_split=0.1,
                 subset="training",
                 seed=42,
@@ -83,9 +88,9 @@ class FlowerClient(fl.client.NumPyClient):
                 batch_size=32,
                 shuffle=True
             ).map(lambda x, y: (x / 255.0, y))
-
+            
             self.val_dataset = tf.keras.preprocessing.image_dataset_from_directory(
-                self.dataset_path,
+                dataset_path,
                 validation_split=0.1,
                 subset="validation",
                 seed=42,
@@ -99,14 +104,15 @@ class FlowerClient(fl.client.NumPyClient):
             self.train_samples = sum(batch[0].shape[0] for batch in self.train_dataset)
             self.val_samples = sum(batch[0].shape[0] for batch in self.val_dataset)
 
-            logging.info(f"Loaded {self.train_samples} training samples and {self.val_samples} validation samples")
+            logging.info(f"Client {self.client_id}: Loaded {self.train_samples} training samples and {self.val_samples} validation samples")
 
             if self.train_samples == 0 or self.val_samples == 0:
-                raise ValueError("Empty dataset detected")
+                raise ValueError(f"Client {self.client_id}: Empty dataset detected")
 
         except Exception as e:
-            logging.error(f"Failed to load data: {e}")
+            logging.error(f"Client {self.client_id}: Failed to load data: {e}")
             raise
+
 
     def get_parameters(self, config):
         return self.model.get_weights()
@@ -114,23 +120,28 @@ class FlowerClient(fl.client.NumPyClient):
     def train_step(self, parameters):
         self.model.set_weights(parameters)
         self.model.compile(optimizer=self.optimizer, loss=self.loss_fn, metrics=['accuracy', sensitivity, specificity])
-        history = self.model.fit(self.train_dataset, epochs=3, verbose=1, callbacks=[self.es, self.lrr], validation_data=self.val_dataset)
+        history = self.model.fit(self.train_dataset, epochs=1, verbose=1, callbacks=[self.es, self.lrr], validation_data=self.val_dataset)
         return self.model.get_weights(), self.train_samples, history
 
     def evaluate(self, parameters, config):
+        logging.info(f"Client {self.client_id} evaluate start")
         self.model.set_weights(parameters)
         self.model.compile(optimizer=self.optimizer, loss=self.loss_fn, metrics=['accuracy', sensitivity, specificity])
         try:
             results = self.model.evaluate(self.val_dataset, verbose=1)
             loss, accuracy, sens, spec = results
+            logging.info(f"Client {self.client_id} evaluate done: loss={loss:.4f}, accuracy={accuracy:.4f}, sensitivity={sens:.4f}, specificity={spec:.4f}")
             return loss, self.val_samples, {"accuracy": accuracy, "sensitivity": sens, "specificity": spec}
         except Exception as e:
-            logging.error(f"Evaluate failed: {e}")
+            logging.error(f"Client {self.client_id} evaluate failed: {e}")
             raise
 
     def fit(self, parameters, config):
+        logging.info(f"Client {self.client_id} fit start")
         try:
             weights, num_examples, history = self.train_step(parameters)
+
+            # Extract final epoch metrics
             metrics = {
                 "loss": float(history.history["loss"][-1]),
                 "val_loss": float(history.history["val_loss"][-1]),
@@ -139,19 +150,20 @@ class FlowerClient(fl.client.NumPyClient):
                 "sensitivity": float(history.history["sensitivity"][-1]),
                 "specificity": float(history.history["specificity"][-1]),
             }
+
+            logging.info(f"Client {self.client_id} fit done")
             return weights, num_examples, metrics
+
         except Exception as e:
-            logging.error(f"Fit failed: {e}")
+            logging.error(f"Client {self.client_id} fit failed: {e}")
             raise
 
+
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_path", type=str, required=True, help="Path to dataset folder")
-    args = parser.parse_args()
-
+    client_id = int(os.getenv("CLIENT_ID", 3))
+    data_dir = r"C:\Users\LOQ\Desktop\clients"
     fl.client.start_numpy_client(
-        server_address="host.docker.internal:8081",
-        client=FlowerClient(dataset_path=args.dataset_path)
+        server_address="localhost:8081",
+        client=FlowerClient(client_id, data_dir)
     )
+    logging.info(f"Client {client_id} finished")
