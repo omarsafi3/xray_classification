@@ -71,7 +71,7 @@ def load_best_model_from_dir(save_dir, custom_objects):
 
 # --------- Main Execution ---------
 
-save_dir = r"C:\Users\safio\Desktop\xray_classification\python\saved_models"  # update to your path
+save_dir = r"C:\Users\LOQ\Documents\GitHub\xray_classification\python\saved_models"  # update to your path
 
 # Load best model automatically
 model = load_best_model_from_dir(save_dir, custom_objects={

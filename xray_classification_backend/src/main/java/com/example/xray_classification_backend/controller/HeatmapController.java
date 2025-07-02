@@ -48,10 +48,10 @@ public class HeatmapController {
             file.transferTo(tempImage);
 
             // Full absolute path to your Python script
-            String pythonScriptPath = "C:\\Users\\safio\\Desktop\\xray_classification\\python\\heatmap.py";
+            String pythonScriptPath = "C:\\Users\\LOQ\\Documents\\GitHub\\xray_classification\\python\\heatmap.py";
 
             ProcessBuilder builder = new ProcessBuilder(
-                    "C:\\Users\\safio\\.conda\\envs\\tf211\\python.exe",
+                    "C:\\Users\\LOQ\\anaconda3\\envs\\stage_gpu2\\python.exe",
                     pythonScriptPath,
                     "--img_path", tempImage.getAbsolutePath()
             );

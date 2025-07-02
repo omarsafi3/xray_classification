@@ -18,7 +18,7 @@ public class DownloadController {
     @GetMapping("/client-zip")
     public ResponseEntity<Resource> downloadClientZip() throws IOException {
         // Load the ZIP from resources (classpath)
-        Resource resource = new ClassPathResource("static/downloads/client_bundle.zip");
+        Resource resource = new ClassPathResource("static/download/client_bundle.zip");
 
         if (!resource.exists()) {
             return ResponseEntity.notFound().build();

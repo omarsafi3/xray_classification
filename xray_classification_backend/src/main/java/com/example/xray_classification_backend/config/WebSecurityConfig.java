@@ -52,7 +52,7 @@ public class WebSecurityConfig {
                 .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/api/test/all", "/api/v1/model/metrics/**", "/api/v1/heatmap/predict").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/model/metrics/**", "/api/v1/heatmap/predict").permitAll()
                         .anyRequest().authenticated()
                 );
 

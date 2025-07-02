@@ -4,11 +4,14 @@ import com.example.xray_classification_backend.model.User;
 import com.example.xray_classification_backend.repository.UserRepository;
 import com.example.xray_classification_backend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -21,7 +24,7 @@ public class AuthController {
     @Autowired
     JwtUtil jwtUtils;
     @PostMapping("/signin")
-    public String authenticateUser(@RequestBody User user) {
+    public ResponseEntity<?> authenticateUser(@RequestBody User user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
@@ -29,7 +32,8 @@ public class AuthController {
                 )
         );
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return jwtUtils.generateToken(userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("token", jwtUtils.generateToken(userDetails.getUsername())));
+
     }
     @PostMapping("/signup")
     public String registerUser(@RequestBody User user) {
