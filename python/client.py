@@ -114,7 +114,7 @@ class FlowerClient(fl.client.NumPyClient):
     def train_step(self, parameters):
         self.model.set_weights(parameters)
         self.model.compile(optimizer=self.optimizer, loss=self.loss_fn, metrics=['accuracy', sensitivity, specificity])
-        history = self.model.fit(self.train_dataset, epochs=3, verbose=1, callbacks=[self.es, self.lrr], validation_data=self.val_dataset)
+        history = self.model.fit(self.train_dataset, epochs=2, verbose=1, callbacks=[self.es, self.lrr], validation_data=self.val_dataset)
         return self.model.get_weights(), self.train_samples, history
 
     def evaluate(self, parameters, config):
@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_path", type=str, required=True, help="Path to dataset folder")
     args = parser.parse_args()
+    client_instance = FlowerClient(dataset_path=args.dataset_path)
 
     fl.client.start_numpy_client(server_address="host.docker.internal:8081", client=client_instance)
 

@@ -88,7 +88,7 @@ class SaveBestModelStrategy(fl.server.strategy.FedAvg):
         self.test_data = kwargs.pop("test_data", None)  # pop first
         super().__init__(**kwargs)                      # then call parent constructor
 	# Call this once
-        self.test_data = load_central_test_data(r"C:\Users\LOQ\Desktop\Files\central_curated_sourour\test")
+        self.test_data = load_central_test_data(r"C:\Users\safio\Desktop\central_curated_sourour\test")
 
         self.best_val_loss = get_best_val_loss(save_dir)
         self.model_builder = model_builder
@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     strategy = SaveBestModelStrategy(
         model_builder=model_builder,
-        test_data = load_central_test_data(r"C:\Users\LOQ\Desktop\Files\central_curated_sourour\test"),  #
+        test_data = load_central_test_data(r"C:\Users\safio\Desktop\central_curated_sourour\test"),  #
         fraction_fit=1.0,
         fraction_evaluate=1.0,
         min_fit_clients=1,
