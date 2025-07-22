@@ -57,19 +57,7 @@ The server will start at:
 http://localhost:8080
 ```
 
-## 🧪 API Endpoints (Example)
 
-- `POST /api/predict` — Submit an X-ray image and receive the classification result.
 
-## 🗂 Notes
 
-This backend is intended to work with a frontend or a model-serving layer for X-ray classification. Ensure that your prediction logic is properly wired (e.g., using TensorFlow model or REST call to a Python server).
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
-
----
-
-Feel free to contribute or raise issues via [GitHub Issues](https://github.com/omarsafi3/xray_classification/issues).
 
