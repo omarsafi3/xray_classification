@@ -89,6 +89,8 @@ http://localhost:8080
 This backend is intended to work with a frontend or a model-serving layer for X-ray classification. Ensure that your Python script runs using the correct environment where dependencies from `requirements.txt` are installed.
 
 
+Make sure to modify these: 
+
 
 - Test dataset path inside `load_central_test_data(...)`
 
