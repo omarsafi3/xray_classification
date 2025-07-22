@@ -10,6 +10,7 @@ This is a backend application built with **Spring Boot** to serve predictions fo
 - RESTful APIs
 
 
+
 ## 📦 Prerequisites
 
 - Java 17 or higher
@@ -80,5 +81,42 @@ Server will start at:
 ```
 http://localhost:8080
 ```
+
+
+
+## 🗂 Notes
+
+This backend is intended to work with a frontend or a model-serving layer for X-ray classification. Ensure that your Python script runs using the correct environment where dependencies from `requirements.txt` are installed.
+
+
+
+- Test dataset path inside `load_central_test_data(...)`
+
+  Modify lines 91 & 341 and change the path to the test dataset
+```python
+# Update this to your actual test set location
+self.test_data = load_central_test_data(r"C:\Users\safio\Desktop\central_curated_sourour\test")
+
+test_data = load_central_test_data(r"C:\Users\safio\Desktop\central_curated_sourour\test"), 
+```
+
+
+  
+- Python `ProcessBuilder` paths inside the Java backend
+
+
+
+### 🛠️ Database Configuration
+
+Make sure to update the `application.properties` file to reflect your **MySQL credentials** and connection URL. Example:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/xray_db
+spring.datasource.username=root
+spring.datasource.password=your_password
+```
+
+Replace `xray_db`, `root`, and `your_password` with your actual MySQL database name and credentials.
+
 
 
