@@ -4,6 +4,7 @@ This is a backend application built with **Spring Boot** to serve predictions fo
 
 ## ⚙️ Tech Stack
 
+- MySQL installed and running (for backend database connection)
 - Java 17
 - Spring Boot 3+
 - Maven
