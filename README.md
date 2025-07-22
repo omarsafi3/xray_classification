@@ -9,16 +9,6 @@ This is a backend application built with **Spring Boot** to serve predictions fo
 - Maven
 - RESTful APIs
 
-## 📁 Project Structure
-
-```
-├── src/
-│   ├── main/
-│   │   ├── java/com/example/xray/        # Source code
-│   │   └── resources/                    # Application config
-├── pom.xml                               # Maven project file
-└── README.md                             # Project documentation
-```
 
 ## 📦 Prerequisites
 
