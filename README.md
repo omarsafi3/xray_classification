@@ -92,7 +92,7 @@ This backend is intended to work with a frontend or a model-serving layer for X-
 Make sure to modify these: 
 
 
-- Test dataset path inside `load_central_test_data(...)`
+- Test dataset path inside [`server.py`](https://github.com/omarsafi3/xray_classification/blob/main/python/server.py)
 
   Modify lines 91 & 341 and change the path to the test dataset
 ```python
