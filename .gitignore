@@ -37,3 +37,9 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Docker
+data/
+
+# Node (frontend)
+node_modules/

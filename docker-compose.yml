@@ -1,0 +1,132 @@
+version: '3.8'
+
+# =============================================================================
+# X-ray Classification System - SERVER SIDE
+# =============================================================================
+# This docker-compose runs on the CENTRAL SERVER machine.
+# It hosts:
+#   - MySQL Database
+#   - Spring Boot Backend API
+#   - Flower FL Server (clients connect to this)
+#   - Angular Frontend
+#
+# Clients run SEPARATELY on different machines (hospitals).
+# See: python/README_CLIENT.md for client setup instructions.
+#
+# Usage:
+#   docker-compose up -d          # Start all server services
+#   docker-compose logs -f        # View logs
+#   docker-compose down           # Stop all
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL Database
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: xray-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-0000}
+      MYSQL_DATABASE: xray_metrics
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - xray-network
+
+  # ---------------------------------------------------------------------------
+  # Spring Boot Backend API
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./xray_classification_backend
+      dockerfile: Dockerfile
+    container_name: xray-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/xray_metrics
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-0000}
+      JWT_SECRET: ${JWT_SECRET:-90310e450cdfa77b44d79b5d150a4fe9bebc24ccec866ab1ad8fa8e764049f4a}
+      PYTHON_EXECUTABLE: python
+      PYTHON_HEATMAP_SCRIPT: /app/python/heatmap.py
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./python:/app/python:ro
+      - model_data:/app/python/saved_models:ro
+    networks:
+      - xray-network
+
+  # ---------------------------------------------------------------------------
+  # Flower Federated Learning Server
+  # ---------------------------------------------------------------------------
+  # IMPORTANT: This is where remote clients connect!
+  # Make sure port 8081 is accessible from client machines.
+  # 
+  # Firewall: sudo ufw allow 8081/tcp
+  # ---------------------------------------------------------------------------
+  fl-server:
+    build:
+      context: ./python
+      dockerfile: Dockerfile.server
+    container_name: xray-fl-server
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      TEST_DATA_PATH: /data/test
+      MODEL_SAVE_DIR: /app/saved_models
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "8081:8081"   # Exposed for remote clients to connect
+    volumes:
+      - model_data:/app/saved_models
+      - ${TEST_DATA_PATH:-./data/test}:/data/test:ro
+    networks:
+      - xray-network
+
+  # ---------------------------------------------------------------------------
+  # Angular Frontend
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../xray_classification_front
+      dockerfile: Dockerfile
+    container_name: xray-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+    environment:
+      API_URL: http://localhost:8080/api/v1
+    networks:
+      - xray-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  xray-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  mysql_data:
+    name: xray-mysql-data
+  model_data:
+    name: xray-model-data

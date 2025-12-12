@@ -146,11 +146,13 @@ class FlowerClient(fl.client.NumPyClient):
 
 if __name__ == "__main__":
     import argparse
+    import os
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_path", type=str, required=True, help="Path to dataset folder")
     args = parser.parse_args()
     client_instance = FlowerClient(dataset_path=args.dataset_path)
 
-    fl.client.start_numpy_client(server_address="host.docker.internal:8081", client=client_instance)
-
+    # Support both Docker and local execution
+    server_address = os.environ.get("FL_SERVER_ADDRESS", "localhost:8081")
+    fl.client.start_numpy_client(server_address=server_address, client=client_instance)

@@ -1,0 +1,33 @@
+# =============================================================================
+# Federated Learning Client Configuration
+# =============================================================================
+# This file is for a SINGLE CLIENT running on THIS machine.
+# Each hospital/facility has their own copy of this config.
+#
+# The FL Server runs on a REMOTE central server.
+# Clients connect to it over the network.
+#
+# Setup:
+#   1. Copy this file to each client machine
+#   2. Set the data_path to the local dataset on that machine
+#   3. Set the server address to the central FL server's IP/hostname
+#   4. Run: python client.py --dataset_path /path/to/data
+# =============================================================================
+
+# This client's configuration
+client:
+  name: hospital1                    # Unique name for this client
+  data_path: /path/to/local/dataset  # Local dataset path on THIS machine
+  
+# Central FL Server (running on remote machine)
+server:
+  # Replace with your actual server IP or hostname
+  address: 192.168.1.100:8081        # Example: LAN IP
+  # address: fl-server.example.com:8081  # Example: Domain name
+  # address: 34.123.45.67:8081          # Example: Cloud IP
+
+# Training settings
+training:
+  gpu_enabled: true     # Use GPU if available
+  batch_size: 32
+  epochs_per_round: 2   # Local epochs before sending to server

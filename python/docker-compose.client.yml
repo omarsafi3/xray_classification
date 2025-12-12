@@ -1,0 +1,33 @@
+version: '3.8'
+
+# =============================================================================
+# X-ray Classification - FL CLIENT
+# =============================================================================
+# This docker-compose runs on CLIENT machines (hospitals).
+# It connects to the central FL server for federated training.
+#
+# Setup:
+#   1. Copy this file to the client machine
+#   2. Create .env file with your settings (see .env.client.example)
+#   3. Run: docker-compose up
+# =============================================================================
+
+services:
+  fl-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: xray-fl-client
+    restart: "no"
+    environment:
+      FL_SERVER_ADDRESS: ${FL_SERVER_ADDRESS:-localhost:8081}
+    volumes:
+      - ${DATASET_PATH:-./ data}:/data:ro
+    command: ["--dataset_path", "/data"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

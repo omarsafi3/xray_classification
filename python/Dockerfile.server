@@ -1,0 +1,30 @@
+# Flower FL Server Dockerfile
+FROM tensorflow/tensorflow:2.15.0-gpu
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy server code
+COPY server.py .
+COPY heatmap.py .
+
+# Create directory for saved models
+RUN mkdir -p /app/saved_models
+
+# Expose Flower server port
+EXPOSE 8081
+
+# Environment variables with defaults
+ENV TEST_DATA_PATH=/data/test
+ENV MODEL_SAVE_DIR=/app/saved_models
+ENV BACKEND_URL=http://backend:8080
+
+# Run the FL server
+CMD ["python", "server.py"]

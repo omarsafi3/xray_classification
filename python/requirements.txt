@@ -6,3 +6,4 @@ matplotlib
 Pillow
 tf-keras-vis
 requests
+pyyaml

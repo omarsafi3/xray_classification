@@ -153,7 +153,8 @@ class SaveBestModelStrategy(fl.server.strategy.FedAvg):
 
     def _send_global_metrics(self, metrics):
         try:
-            response = requests.post("http://localhost:8080/api/v1/model/metrics/save", json=metrics)
+            backend_url = os.environ.get("BACKEND_URL", "http://localhost:8080")
+            response = requests.post(f"{backend_url}/api/v1/model/metrics/save", json=metrics)
             logging.info(f"[Dashboard] Sent global metrics: {metrics}, Response: {response.status_code}, {response.text}")
         except Exception as e:
             logging.warning(f"[Dashboard] Failed to send metrics: {e}")

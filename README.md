@@ -9,40 +9,35 @@ A **Federated Learning-based medical image classification system** for detecting
 
 ## 🏗️ Architecture Overview
 
+This is a **distributed federated learning system**. The server runs centrally, and clients run on separate machines at different hospitals.
+
 ```
+                         ☁️ CENTRAL SERVER (Cloud/Data Center)
 ┌─────────────────────────────────────────────────────────────────┐
-│                    X-ray Classification System                   │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
-│  │   Client 1   │    │   Client 2   │    │   Client N   │       │
-│  │  (Hospital)  │    │  (Hospital)  │    │  (Hospital)  │       │
-│  │  Local Data  │    │  Local Data  │    │  Local Data  │       │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘       │
-│         │                   │                   │                │
-│         └───────────────────┼───────────────────┘                │
-│                             │                                    │
-│                             ▼                                    │
-│                   ┌──────────────────┐                          │
-│                   │  Flower Server   │                          │
-│                   │  (Aggregation)   │                          │
-│                   │   Port: 8081     │                          │
-│                   └────────┬─────────┘                          │
-│                            │                                     │
-│                            ▼                                     │
-│                   ┌──────────────────┐      ┌──────────────┐    │
-│                   │  Spring Boot API │◄────►│    MySQL     │    │
-│                   │   Port: 8080     │      │   Database   │    │
-│                   └────────┬─────────┘      └──────────────┘    │
-│                            │                                     │
-│                            ▼                                     │
-│                   ┌──────────────────┐                          │
-│                   │  Frontend/Client │                          │
-│                   │   Application    │                          │
-│                   └──────────────────┘                          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   MySQL     │  │   Backend   │  │  Frontend   │              │
+│  │   :3306     │  │   :8080     │  │   :4200     │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│                          ▲                                       │
+│  ┌───────────────────────┴───────────────────────┐              │
+│  │           FL Server :8081                      │              │
+│  │      (Aggregates model updates)               │              │
+│  └───────────────────────┬───────────────────────┘              │
+└──────────────────────────┼──────────────────────────────────────┘
+                           │ Internet/VPN
+         ┌─────────────────┼─────────────────┐
+         │                 │                 │
+         ▼                 ▼                 ▼
+  🏥 Hospital 1      🏥 Hospital 2      🏥 Hospital 3
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  FL Client  │    │  FL Client  │    │  FL Client  │
+│  (GPU PC)   │    │  (GPU PC)   │    │  (GPU PC)   │
+│ Local Data  │    │ Local Data  │    │ Local Data  │
+│ NEVER LEAVES│    │ NEVER LEAVES│    │ NEVER LEAVES│
+└─────────────┘    └─────────────┘    └─────────────┘
 ```
+
+**Privacy**: Raw patient data NEVER leaves the hospital. Only model weights are exchanged!
 
 ## ✨ Features
 
@@ -66,90 +61,118 @@ A **Federated Learning-based medical image classification system** for detecting
 
 ## 📦 Prerequisites
 
-- **Java 17** or higher
-- **Maven 3.8+**
-- **Python 3.8+** (Anaconda/Miniconda recommended)
-- **MySQL 8.0+**
-- **Docker** (optional, for containerized clients)
+### Central Server
+- **Docker & Docker Compose**
+- **Public IP or domain** accessible by clients
+- **Open port 8081** for FL clients
 
-## 🚀 Getting Started
+### Client Machines (Hospitals)
+- **Python 3.8+** with CUDA support
+- **NVIDIA GPU** with drivers
+- **Network access** to central server port 8081
 
-### 1. Clone the Repository
+---
+
+# 🖥️ Server Setup
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/omarsafi3/xray_classification.git
 cd xray_classification
 ```
 
-### 2. Set Up MySQL Database
-
-```sql
-CREATE DATABASE xray_metrics;
-```
-
-### 3. Set Up Python Environment
+## 2. Configure Environment
 
 ```bash
-# Using Conda (recommended)
-conda create -n xray_env python=3.8
-conda activate xray_env
-pip install -r python/requirements.txt
-
-# Or using venv
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-pip install -r python/requirements.txt
+cp .env.example .env
+nano .env  # Edit with your settings
 ```
 
-### 4. Configure Environment Variables
-
-Create environment-specific configuration:
+## 3. Start Server with Docker Compose
 
 ```bash
-# Linux/Mac
-export DB_PASSWORD=your_mysql_password
-export JWT_SECRET=your_secure_jwt_secret_key
-export TEST_DATA_PATH=/path/to/test/dataset
-export MODEL_SAVE_DIR=/path/to/saved_models
-export PYTHON_EXECUTABLE=/path/to/python
-export PYTHON_HEATMAP_SCRIPT=/path/to/python/heatmap.py
+# Start all server services
+docker-compose up -d
 
-# Windows (Command Prompt)
-set DB_PASSWORD=your_mysql_password
-set TEST_DATA_PATH=C:\path\to\test\dataset
-set PYTHON_EXECUTABLE=C:\Users\username\anaconda3\envs\xray_env\python.exe
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f fl-server
 ```
 
-### 5. Build and Run the Spring Boot Backend
+## 4. Open Firewall for Clients
 
 ```bash
-cd xray_classification_backend
-mvn clean install
-mvn spring-boot:run
+# Allow FL clients to connect
+sudo ufw allow 8081/tcp
 ```
 
-The API will be available at: `http://localhost:8080`
+## 5. Access the System
 
-### 6. Start the Federated Learning Server
+| Service | URL |
+|---------|-----|
+| Frontend | http://your-server-ip:4200 |
+| Backend API | http://your-server-ip:8080 |
+| FL Server | your-server-ip:8081 (for clients) |
+
+---
+
+# 🏥 Client Setup (At Each Hospital)
+
+Each hospital runs a client that connects to the central server.
+
+## Option 1: Python (Direct)
 
 ```bash
-cd python
-python server.py
+# 1. Clone repository
+git clone https://github.com/omarsafi3/xray_classification.git
+cd xray_classification/python
+
+# 2. Create environment
+conda create -n xray_client python=3.8
+conda activate xray_client
+pip install -r requirements.txt
+
+# 3. Run client (replace SERVER_IP with actual server IP)
+export FL_SERVER_ADDRESS=<SERVER_IP>:8081
+python client.py --dataset_path /path/to/local/xray/dataset
 ```
 
-The FL server will listen on: `localhost:8081`
-
-### 7. Start Federated Learning Clients
+## Option 2: Docker (Recommended)
 
 ```bash
-# Run client with local dataset
-python client.py --dataset_path /path/to/client/data
+# 1. Clone repository
+git clone https://github.com/omarsafi3/xray_classification.git
+cd xray_classification/python
 
-# Or use Docker
-docker build -t xray-client .
-docker run --gpus all -v /path/to/data:/data xray-client --dataset_path /data
+# 2. Build image
+docker build -t xray-fl-client .
+
+# 3. Run client
+docker run --gpus all \
+  -e FL_SERVER_ADDRESS=<SERVER_IP>:8081 \
+  -v /path/to/local/dataset:/data:ro \
+  xray-fl-client --dataset_path /data
 ```
+
+## Option 3: Docker Compose
+
+```bash
+cd xray_classification/python
+
+# Edit .env with your server IP and dataset path
+cp .env.client.example .env
+nano .env
+
+# Run
+docker-compose -f docker-compose.client.yml up
+```
+
+See [python/README_CLIENT.md](python/README_CLIENT.md) for detailed client setup instructions.
+
+---
 
 ## 📁 Project Structure
 
@@ -160,10 +183,12 @@ xray_classification/
 │   ├── client.py          # FL client for distributed training
 │   ├── heatmap.py         # GradCAM visualization for predictions
 │   ├── requirements.txt   # Python dependencies
-│   ├── Dockerfile         # GPU-enabled container for clients
+│   ├── Dockerfile         # GPU-enabled container for FL clients
+│   ├── Dockerfile.server  # Container for FL server
 │   └── saved_models/      # Trained model checkpoints
 │
 ├── xray_classification_backend/
+│   ├── Dockerfile         # Spring Boot container
 │   ├── src/main/java/com/example/xray_classification_backend/
 │   │   ├── controller/
 │   │   │   ├── AuthController.java       # Login/Register endpoints
@@ -184,7 +209,20 @@ xray_classification/
 │   └── src/main/resources/
 │       └── application.properties
 │
+├── docker-compose.yml     # Orchestrates all services
+├── .env.example           # Environment variables template
 └── README.md
+
+xray_classification_front/ (separate repo)
+├── src/app/
+│   ├── login/             # JWT authentication
+│   ├── signup/            # User registration
+│   ├── upload-image/      # X-ray upload & prediction
+│   ├── global-metrics-list/  # Training metrics dashboard
+│   ├── fl-client/         # FL client management
+│   └── services/          # API services
+├── Dockerfile             # Angular production container
+└── nginx.conf             # Nginx reverse proxy config
 ```
 
 ## 🔌 API Endpoints
@@ -210,7 +248,7 @@ xray_classification/
 
 ## ⚙️ Configuration Reference
 
-### Environment Variables
+### Server Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -220,6 +258,14 @@ xray_classification/
 | `MODEL_SAVE_DIR` | Directory for model checkpoints | `saved_models` |
 | `PYTHON_EXECUTABLE` | Path to Python interpreter | `python` |
 | `PYTHON_HEATMAP_SCRIPT` | Path to heatmap.py | `python/heatmap.py` |
+| `BACKEND_URL` | Backend API URL (for FL server) | `http://localhost:8080` |
+
+### Client Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `FL_SERVER_ADDRESS` | Central FL server address | `192.168.1.100:8081` |
+| `DATASET_PATH` | Path to local training data | `/data/xray_images` |
 
 ### application.properties
 
@@ -251,20 +297,49 @@ The system uses a custom **SE-ResNet50V2** architecture:
 - **Sensitivity**: True positive rate (recall)
 - **Specificity**: True negative rate
 
-## 🐳 Docker Deployment
+## 🐳 Docker Services
 
-### Build Client Image
+### Server-Side Services (Central Machine)
+
+| Service | Port | Description |
+|---------|------|-------------|
+| `frontend` | 4200 | Angular web UI |
+| `backend` | 8080 | Spring Boot REST API |
+| `fl-server` | 8081 | Flower FL aggregation server |
+| `mysql` | 3306 | MySQL database |
+
+### Server Commands
+
 ```bash
-cd python
-docker build -t xray-client .
+# Start all server services
+docker-compose up -d
+
+# View service logs
+docker-compose logs -f backend
+docker-compose logs -f fl-server
+
+# Stop all services
+docker-compose down
+
+# Stop and remove all data (clean start)
+docker-compose down -v
 ```
 
-### Run with GPU Support
+### Client-Side (Hospital Machines)
+
+Each hospital runs a client container that connects to the central server:
+
 ```bash
+cd python
+
+# With Docker Compose
+docker-compose -f docker-compose.client.yml up
+
+# Or direct Docker
 docker run --gpus all \
-  -v /path/to/local/data:/data \
-  -e DATASET_PATH=/data \
-  xray-client --dataset_path /data
+  -e FL_SERVER_ADDRESS=<SERVER_IP>:8081 \
+  -v /path/to/local/data:/data:ro \
+  xray-fl-client --dataset_path /data
 ```
 
 ## 📊 Dataset Structure
