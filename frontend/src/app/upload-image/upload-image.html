@@ -1,0 +1,29 @@
+<div class="upload-container">
+  <h2>Try our AI-powered X-Ray Diagnostic Tool !</h2>
+
+  <div class="description">Our deep learning model delivers high-accuracy predictions
+    and highlights key areas on the scan that influenced the result.</div>
+
+  <input type="file" (change)="onFileSelected($event)" accept="image/*" />
+
+  <button (click)="uploadImage()">Upload</button>
+
+  <div *ngIf="message" class="message">{{ message }}</div>
+
+  <div *ngIf="prediction" class="prediction">
+    <p><strong>Prediction:</strong> {{ prediction }}</p>
+  </div>
+  <div class="images-container" *ngIf="uploadedImageUrl || heatmapImage">
+    <div class="image-box">
+      <h3>X-Ray</h3>
+      <img *ngIf="uploadedImageUrl" [src]="uploadedImageUrl" alt="Original X-ray" />
+    </div>
+    <div class="image-box">
+      <h3>Heatmap</h3>
+      <div class="heatmap-wrapper">
+      <span *ngIf="loadingHeatmap" class="processing-text">Processing...</span>
+      <img *ngIf="heatmapImage" [src]="heatmapImage" alt="Heatmap" />
+    </div>
+    </div>
+  </div>
+</div>

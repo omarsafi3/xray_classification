@@ -1,0 +1,160 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f9fafd;
+  color: #2c3e50;
+  padding-top: 80px; /* Offset for fixed navbar */
+}
+
+/* Navbar Base */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0eafc;
+  padding: 1rem 2rem;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.05);
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-container a {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #007bff;
+  transition: color 0.3s ease;
+}
+
+.navbar-container a:hover {
+  color: #0056b3;
+}
+
+/* Menu Toggle Button (hamburger) */
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #007bff;
+  cursor: pointer;
+  display: none;
+}
+
+/* Navigation Menu */
+nav {
+  display: flex;
+  align-items: center;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
+
+nav li a {
+  font-size: 1rem;
+  color: #2c3e50;
+  font-weight: 500;
+  position: relative;
+  padding-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+nav li a:hover {
+  color: #007bff;
+}
+
+nav li a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: #007bff;
+  transition: width 0.3s ease;
+}
+
+nav li a:hover::after {
+  width: 100%;
+}
+
+/* Mobile Styles */
+.close-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #007bff;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.1);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 2rem;
+    display: none;
+  }
+
+  nav.open {
+    display: flex;
+  }
+
+  nav ul {
+    flex-direction: column;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  nav li {
+    width: 100%;
+  }
+
+  nav li a {
+    width: 100%;
+    padding: 0.5rem 0;
+  }
+
+  .close-btn {
+    display: block;
+    align-self: flex-end;
+    margin-bottom: 1rem;
+  }
+}
+
+.logout-link {
+  cursor: pointer;
+}

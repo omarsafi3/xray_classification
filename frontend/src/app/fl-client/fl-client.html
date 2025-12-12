@@ -1,0 +1,73 @@
+<div class="download-container">
+  <div class="header-section">
+    <div class="text-content">
+      <h2>Join Our Federated Learning Network</h2>
+      <p>
+        Be part of a decentralized AI revolution! Contribute to training our
+        chest X-ray classification model with full privacy and security.
+        Training happens locally on your machine using Docker.
+      </p>
+      <button class="download-btn" (click)="downloadClient()">⬇️ Download Client Bundle</button>
+    </div>
+    <img src="nn.jpg" alt="Neural Network" class="nn-image" />
+  </div>
+
+  <div class="instructions">
+    <h3>How to Get Started</h3>
+
+    <section>
+      <details>
+  <summary>GPU Version — Using Docker with NVIDIA GPU Support</summary>
+  <pre>
+Prepare your dataset folder:
+  Place your dataset locally, for example:
+  C:\Users\Username\Desktop\dataset
+
+Prerequisites:
+- Docker Desktop installed and running
+- NVIDIA GPU drivers installed and up to date
+- NVIDIA Container Toolkit installed for Docker GPU support
+
+Verify GPU access inside Docker:
+  docker run --rm --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
+
+Build the Docker image:
+  docker build -t flower-client-gpu .
+
+Run the client container with GPU access and dataset mounted:
+  docker run --rm --gpus all -v "C:/Users/Username/Desktop/dataset:/app/dataset" flower-client-gpu --dataset_path /app/dataset
+
+    </pre>
+  </details>
+
+
+      <details>
+        <summary> CPU Version — Using Docker Without GPU</summary>
+        <pre>
+Prepare your dataset folder
+  Example path:
+  C:\Users\Username\Desktop\dataset
+
+Ensure Docker is installed and running
+
+Build CPU-only image:
+  docker build -t flower-client-cpu .
+
+Run the container:
+  docker run --rm -v "C:/Users/Username/Desktop/dataset:/app/dataset" flower-client-cpu --dataset_path /app/dataset
+
+Monitor output and logs.
+        </pre>
+      </details>
+
+      <details>
+        <summary> Notes</summary>
+        <ul>
+          <li>GPU version needs NVIDIA drivers and container toolkit</li>
+          <li>CPU version is slower but works everywhere Docker runs</li>
+          <li>Use <code>--dataset_path</code> to specify dataset folder</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+</div>

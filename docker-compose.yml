@@ -101,7 +101,7 @@ services:
   # ---------------------------------------------------------------------------
   frontend:
     build:
-      context: ../xray_classification_front
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: xray-frontend
     restart: unless-stopped

@@ -1,0 +1,22 @@
+<header class="navbar">
+  <div class="navbar-container">
+    <a routerLink="/home">X-Ray Classification</a>
+
+    <button class="menu-toggle" (click)="toggleMenu()">☰</button>
+
+    <nav [class.open]="menuVisible">
+      <ul>
+        <li><a routerLink="/home">Home</a></li>
+        <li><a routerLink="/upload">X-Ray Classifier Tool</a></li>
+        <li><a routerLink="/fl_client">Download FL Client</a></li>
+        <li *ngIf="!isLoggedIn"><a routerLink="/login">Login</a></li>
+        <li *ngIf="!isLoggedIn"><a routerLink="/signup">Sign Up</a></li>
+        <li *ngIf="isLoggedIn"><a class="logout-link" (click)="logout()">Sign out</a></li>
+      </ul>
+    
+
+
+      <button class="close-btn" (click)="closeMenu()">✖</button>
+    </nav>
+  </div>
+</header>
