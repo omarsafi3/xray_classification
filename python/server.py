@@ -12,7 +12,6 @@ import matplotlib
 matplotlib.use('Agg')  # Use a non-interactive backend
 import matplotlib.pyplot as plt
 from keras.models import model_from_json
-from IPython.display import clear_output
 import requests
 
 # Enable logging
@@ -351,8 +350,10 @@ if __name__ == "__main__":
     )
     plt.ion()  # Turn on interactive mode
 
+    # Bind to 0.0.0.0 to accept connections from other containers/machines
+    server_address = os.environ.get("FL_SERVER_BIND", "0.0.0.0:8081")
     fl.server.start_server(
-        server_address="localhost:8081",
+        server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=100),
         strategy=strategy
     )

@@ -32,10 +32,63 @@ This guide is for setting up a **Federated Learning client** at a hospital or da
 
 ## Prerequisites
 
-- **Python 3.8+** with GPU support (CUDA)
+- **Python 3.8+** or **Docker with NVIDIA Container Toolkit**
 - **NVIDIA GPU** with CUDA drivers installed
+- **NVIDIA Container Toolkit** (for Docker GPU support - see installation below)
 - **Network access** to the central FL server (port 8081)
 - **Local X-ray dataset** in the correct format
+
+### Install NVIDIA Container Toolkit (Linux)
+
+```bash
+# Add NVIDIA repo
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Install
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+
+# Configure Docker
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+
+# Test GPU access in Docker
+docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
+```
+
+### Windows Setup
+
+**Option 1: Docker Desktop with WSL2 (Recommended)**
+1. Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+2. Enable **WSL2 backend** in Docker Desktop → Settings → General
+3. Install [NVIDIA drivers for Windows](https://www.nvidia.com/Download/index.aspx)
+4. GPU support works automatically with Docker Desktop + WSL2
+
+```powershell
+# Test GPU access
+docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
+```
+
+**Option 2: Native Python on Windows (No Docker)**
+```powershell
+# 1. Install Miniconda from https://docs.conda.io/en/latest/miniconda.html
+
+# 2. Open Anaconda Prompt and create environment
+conda create -n xray_client python=3.8
+conda activate xray_client
+
+# 3. Install dependencies
+pip install tensorflow==2.15.0 flwr numpy pillow
+
+# 4. Clone repo and run client
+git clone https://github.com/omarsafi3/xray_classification.git
+cd xray_classification\python
+
+$env:FL_SERVER_ADDRESS="<SERVER_IP>:8081"
+python client.py --dataset_path C:\path\to\your\dataset
+```
 
 ## Dataset Format
 
@@ -60,7 +113,7 @@ Your local dataset should be structured like this:
 
 ## Setup Options
 
-### Option 1: Run Directly with Python (Recommended for Testing)
+### Option 1: Run Directly with Python - Linux/macOS
 
 ```bash
 # 1. Clone the repository
@@ -79,7 +132,26 @@ export FL_SERVER_ADDRESS=<SERVER_IP>:8081
 python client.py --dataset_path /path/to/your/dataset
 ```
 
-### Option 2: Run with Docker (Recommended for Production)
+### Option 2: Run Directly with Python - Windows
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/omarsafi3/xray_classification.git
+cd xray_classification\python
+
+# 2. Create virtual environment (using Anaconda Prompt)
+conda create -n xray_client python=3.8
+conda activate xray_client
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run the client
+$env:FL_SERVER_ADDRESS="<SERVER_IP>:8081"
+python client.py --dataset_path C:\path\to\your\dataset
+```
+
+### Option 3: Run with Docker - Linux (Recommended for Production)
 
 ```bash
 # 1. Clone the repository
@@ -89,14 +161,35 @@ cd xray_classification/python
 # 2. Build the Docker image
 docker build -t xray-fl-client -f Dockerfile .
 
-# 3. Run the client
+# 3. Run the client with GPU
 docker run --gpus all \
   -e FL_SERVER_ADDRESS=<SERVER_IP>:8081 \
   -v /path/to/your/dataset:/data:ro \
   xray-fl-client --dataset_path /data
 ```
 
-### Option 3: Use Docker Compose (Easiest)
+> **Note**: If testing on the same machine as the server, use `172.17.0.1:8081` as the server address (Docker bridge network IP).
+
+### Option 4: Run with Docker - Windows (Docker Desktop + WSL2)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/omarsafi3/xray_classification.git
+cd xray_classification\python
+
+# 2. Build the Docker image
+docker build -t xray-fl-client -f Dockerfile .
+
+# 3. Run the client with GPU
+docker run --gpus all `
+  -e FL_SERVER_ADDRESS=<SERVER_IP>:8081 `
+  -v C:\path\to\your\dataset:/data:ro `
+  xray-fl-client --dataset_path /data
+```
+
+> **Note**: Windows uses backticks (`) for line continuation instead of backslashes.
+
+### Option 5: Use Docker Compose (Easiest)
 
 ```bash
 # 1. Copy the client docker-compose
@@ -108,7 +201,7 @@ cp .env.client.example .env
 nano .env  # Set your server IP and data path
 
 # 3. Run
-docker-compose up
+docker compose up
 ```
 
 ## Configuration

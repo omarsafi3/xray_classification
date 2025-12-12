@@ -67,9 +67,59 @@ This is a **distributed federated learning system**. The server runs centrally, 
 - **Open port 8081** for FL clients
 
 ### Client Machines (Hospitals)
-- **Python 3.8+** with CUDA support
-- **NVIDIA GPU** with drivers
+- **Python 3.8+** or **Docker with NVIDIA Container Toolkit**
+- **NVIDIA GPU** with drivers installed
+- **NVIDIA Container Toolkit** (for Docker GPU support)
 - **Network access** to central server port 8081
+
+#### Install NVIDIA Container Toolkit (Linux)
+```bash
+# Add NVIDIA repo
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Install
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+
+# Configure Docker
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+
+# Test
+docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
+```
+
+#### Install NVIDIA Container Toolkit (Windows)
+
+**Option 1: Docker Desktop with WSL2 (Recommended)**
+1. Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+2. Enable WSL2 backend in Docker Desktop settings
+3. Install [NVIDIA drivers for Windows](https://www.nvidia.com/Download/index.aspx)
+4. GPU support works automatically with Docker Desktop + WSL2
+
+```powershell
+# Test GPU access
+docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
+```
+
+**Option 2: Native Python (No Docker)**
+```powershell
+# Install Miniconda from https://docs.conda.io/en/latest/miniconda.html
+
+# Create environment
+conda create -n xray_client python=3.8
+conda activate xray_client
+
+# Install CUDA-enabled TensorFlow
+pip install tensorflow[and-cuda]==2.15.0
+pip install flwr numpy pillow
+
+# Run client
+$env:FL_SERVER_ADDRESS="<SERVER_IP>:8081"
+python client.py --dataset_path C:\path\to\dataset
+```
 
 ---
 
@@ -93,14 +143,16 @@ nano .env  # Edit with your settings
 
 ```bash
 # Start all server services
-docker-compose up -d
+docker compose up -d
 
 # Check status
-docker-compose ps
+docker compose ps
 
 # View logs
-docker-compose logs -f fl-server
+docker compose logs -f fl-server
 ```
+
+> **Note**: Use `docker compose` (with space) instead of `docker-compose` for Docker Compose V2.
 
 ## 4. Open Firewall for Clients
 
@@ -150,12 +202,14 @@ cd xray_classification/python
 # 2. Build image
 docker build -t xray-fl-client .
 
-# 3. Run client
+# 3. Run client with GPU
 docker run --gpus all \
   -e FL_SERVER_ADDRESS=<SERVER_IP>:8081 \
   -v /path/to/local/dataset:/data:ro \
   xray-fl-client --dataset_path /data
 ```
+
+> **Note**: If running client on the same machine as server, use `172.17.0.1:8081` as the server address.
 
 ## Option 3: Docker Compose
 
@@ -167,7 +221,7 @@ cp .env.client.example .env
 nano .env
 
 # Run
-docker-compose -f docker-compose.client.yml up
+docker compose -f docker-compose.client.yml up
 ```
 
 See [python/README_CLIENT.md](python/README_CLIENT.md) for detailed client setup instructions.
@@ -312,17 +366,17 @@ The system uses a custom **SE-ResNet50V2** architecture:
 
 ```bash
 # Start all server services
-docker-compose up -d
+docker compose up -d
 
 # View service logs
-docker-compose logs -f backend
-docker-compose logs -f fl-server
+docker compose logs -f backend
+docker compose logs -f fl-server
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove all data (clean start)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Client-Side (Hospital Machines)
@@ -333,14 +387,16 @@ Each hospital runs a client container that connects to the central server:
 cd python
 
 # With Docker Compose
-docker-compose -f docker-compose.client.yml up
+docker compose -f docker-compose.client.yml up
 
-# Or direct Docker
+# Or direct Docker with GPU
 docker run --gpus all \
   -e FL_SERVER_ADDRESS=<SERVER_IP>:8081 \
   -v /path/to/local/data:/data:ro \
   xray-fl-client --dataset_path /data
 ```
+
+> **Local Testing**: Use `172.17.0.1:8081` as `FL_SERVER_ADDRESS` when running client on the same machine as server.
 
 ## 📊 Dataset Structure
 

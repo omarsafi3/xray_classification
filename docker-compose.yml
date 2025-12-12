@@ -1,5 +1,3 @@
-version: '3.8'
-
 # =============================================================================
 # X-ray Classification System - SERVER SIDE
 # =============================================================================
@@ -65,7 +63,6 @@ services:
       - "8080:8080"
     volumes:
       - ./python:/app/python:ro
-      - model_data:/app/python/saved_models:ro
     networks:
       - xray-network
 
@@ -93,7 +90,7 @@ services:
       - "8081:8081"   # Exposed for remote clients to connect
     volumes:
       - model_data:/app/saved_models
-      - ${TEST_DATA_PATH:-./data/test}:/data/test:ro
+      - /home/omarsafi/central_curated_sourour/test:/data/test:ro
     networks:
       - xray-network
 
