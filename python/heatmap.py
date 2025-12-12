@@ -53,9 +53,10 @@ def load_best_model_from_dir(save_dir, custom_objects):
     if not os.path.exists(save_dir):
         raise FileNotFoundError(f"Save directory '{save_dir}' not found")
 
-    model_files = [f for f in os.listdir(save_dir) if f.endswith(".keras")]
+    # Support both .keras and .h5 extensions
+    model_files = [f for f in os.listdir(save_dir) if f.endswith((".keras", ".h5"))]
     if not model_files:
-        raise FileNotFoundError("No saved `.keras` models found in the directory.")
+        raise FileNotFoundError("No saved `.keras` or `.h5` models found in the directory.")
 
     def extract_val_loss(filename):
         match = re.search(r"loss_([\d\.]+)", filename)
@@ -67,6 +68,8 @@ def load_best_model_from_dir(save_dir, custom_objects):
     best_model_file = min(model_files, key=extract_val_loss)
     best_model_path = os.path.join(save_dir, best_model_file)
     print(f"Loading best model: {best_model_file} with val_loss = {extract_val_loss(best_model_file)}")
+    
+    # Load model (works with both .keras and .h5 formats in TF 2.15)
     return tf.keras.models.load_model(best_model_path, custom_objects=custom_objects)
 
 # --------- Main Execution ---------

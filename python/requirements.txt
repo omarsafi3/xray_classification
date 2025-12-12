@@ -1,9 +1,9 @@
-flwr
+flwr==1.5.0
 tensorflow==2.15.0
 keras==2.15.0
-numpy
-matplotlib
-Pillow
-tf-keras-vis
-requests
-pyyaml
+numpy==1.24.3
+matplotlib==3.7.2
+Pillow==10.0.0
+tf-keras-vis==0.8.5
+requests==2.31.0
+pyyaml==6.0.1

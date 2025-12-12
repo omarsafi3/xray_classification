@@ -57,12 +57,14 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-0000}
       JWT_SECRET: ${JWT_SECRET:-90310e450cdfa77b44d79b5d150a4fe9bebc24ccec866ab1ad8fa8e764049f4a}
-      PYTHON_EXECUTABLE: python
+      PYTHON_EXECUTABLE: python3
       PYTHON_HEATMAP_SCRIPT: /app/python/heatmap.py
+      MODEL_SAVE_DIR: /app/saved_models
     ports:
       - "8080:8080"
     volumes:
       - ./python:/app/python:ro
+      - ${MODEL_PATH:-/home/omarsafi/stage/xray_classification/python/saved_models}:/app/saved_models:ro
     networks:
       - xray-network
 

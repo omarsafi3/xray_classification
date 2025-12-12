@@ -22,7 +22,7 @@ services:
     environment:
       FL_SERVER_ADDRESS: ${FL_SERVER_ADDRESS:-localhost:8081}
     volumes:
-      - ${DATASET_PATH:-./ data}:/data:ro
+      - ${DATASET_PATH:-./data}:/data:ro
     command: ["--dataset_path", "/data"]
     deploy:
       resources:

@@ -30,6 +30,9 @@ public class HeatmapController {
     @Value("${python.heatmap.script.path:python/heatmap.py}")
     private String pythonScriptPath;
 
+    @Value("${model.save.dir:saved_models}")
+    private String modelSaveDir;
+
     @Autowired
     private HeatmapRepository heatmapRepository;
 
@@ -62,6 +65,8 @@ public class HeatmapController {
                     "--img_path", tempImage.getAbsolutePath()
             );
 
+            // Pass MODEL_SAVE_DIR environment variable to the Python script
+            builder.environment().put("MODEL_SAVE_DIR", modelSaveDir);
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
