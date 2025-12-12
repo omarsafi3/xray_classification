@@ -2,6 +2,7 @@ package com.example.xray_classification_backend.controller;
 
 import com.example.xray_classification_backend.model.HeatmapEntity;
 import com.example.xray_classification_backend.repository.HeatmapRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @RestController
 @RequestMapping("/api/v1/heatmap")
 public class HeatmapController {
+
+    @Value("${python.executable.path:python}")
+    private String pythonExecutablePath;
+
+    @Value("${python.heatmap.script.path:python/heatmap.py}")
+    private String pythonScriptPath;
 
     @Autowired
     private HeatmapRepository heatmapRepository;
@@ -47,11 +56,8 @@ public class HeatmapController {
             File tempImage = new File(tempDir, file.getOriginalFilename());
             file.transferTo(tempImage);
 
-            // Full absolute path to your Python script
-            String pythonScriptPath = "C:\\Users\\safio\\Desktop\\xray_classification\\python\\heatmap.py";
-
             ProcessBuilder builder = new ProcessBuilder(
-                    "C:\\Users\\safio\\.conda\\envs\\tf211\\python.exe",
+                    pythonExecutablePath,
                     pythonScriptPath,
                     "--img_path", tempImage.getAbsolutePath()
             );
@@ -91,7 +97,7 @@ public class HeatmapController {
 
             // Parse JSON output from Python script
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> result = mapper.readValue(jsonLine, Map.class);
+            Map<String, Object> result = mapper.readValue(jsonLine, new TypeReference<Map<String, Object>>() {});
 
             return ResponseEntity.ok(result);
 

@@ -1,1 +1,39 @@
+# Python
 python/saved_models/*.keras
+python/saved_models/
+python/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+.env
+
+# Matplotlib
+accuracy_progress.png
+
+# Java / Maven
+xray_classification_backend/target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local

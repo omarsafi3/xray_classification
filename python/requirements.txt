@@ -4,3 +4,5 @@ keras==2.15.0
 numpy
 matplotlib
 Pillow
+tf-keras-vis
+requests

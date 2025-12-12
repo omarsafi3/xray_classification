@@ -4,7 +4,6 @@ import com.example.xray_classification_backend.model.User;
 import com.example.xray_classification_backend.repository.UserRepository;
 import com.example.xray_classification_backend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
